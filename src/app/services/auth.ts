@@ -1,91 +1,64 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, tap } from 'rxjs';
+import { LoginRequest, LoginResponse } from '../models/auth.models';
 
 @Injectable({
   providedIn: 'root'
 })
+
 export class AuthService {
 
-  private readonly tokenKey = 'token';
+  private http = inject(HttpClient);
 
-  setToken(token: string): void {
-    localStorage.setItem(this.tokenKey, token);
-  }
+  private apiUrl = 'https://localhost:7265/api/Auth';
 
-  getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
-  }
+  private tokenKey = 'jwt_token';
 
-  logout(): void {
-    localStorage.removeItem(this.tokenKey);
-  }
+  login(credentials: LoginRequest): Observable<LoginResponse> {
 
-  isLoggedIn(): boolean {
-    const token = this.getToken();
-    return !!token;
-  }
-}
-
-
-/*
-import { Injectable } from '@angular/core';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthService {
-
-  private readonly tokenKey = 'token';
-
-  setToken(token: string): void {
-    localStorage.setItem(this.tokenKey, token);
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
-  }
-
-  logout(): void {
-    localStorage.removeItem(this.tokenKey);
-  }
-
-  isLoggedIn(): boolean {
-
-    const token = this.getToken();
-
-    if (!token) {
-      return false;
-    }
-
-    const payload = this.decodeToken(token);
-
-    if (!payload || !payload.exp) {
-      return false;
-    }
-
-    const currentTime = Math.floor(Date.now() / 1000);
-
-    return payload.exp > currentTime;
-  }
-
-  private decodeToken(token: string): any {
-
-    try {
-
-      const payload = token.split('.')[1];
-
-      return JSON.parse(
-        atob(
-          payload
-            .replace(/-/g, '+')
-            .replace(/_/g, '/')
-        )
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials)
+      .pipe(
+        tap(response => {
+          localStorage.setItem(this.tokenKey, response.token);
+        })
       );
+  }
 
-    } catch {
+  logout(): void {
+    localStorage.removeItem(this.tokenKey);
+  }
 
-      return null;
-    }
+  getToken(): string | null {
+    return localStorage.getItem(this.tokenKey);
+  }
+
+  isLoggedIn(): boolean {
+    return !!this.getToken();
   }
 }
 
-*/
+
+// export class AuthService {
+
+//   private readonly tokenKey = 'token';
+
+//   setToken(token: string): void {
+//     localStorage.setItem(this.tokenKey, token);
+//   }
+
+//   getToken(): string | null {
+//     return localStorage.getItem(this.tokenKey);
+//   }
+
+//   logout(): void {
+//     localStorage.removeItem(this.tokenKey);
+//   }
+
+//   isLoggedIn(): boolean {
+//     const token = this.getToken();
+//     return !!token;
+//   }
+// }
+
+
